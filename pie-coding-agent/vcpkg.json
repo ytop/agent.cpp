@@ -1,0 +1,37 @@
+{
+  "name": "pie-coding-agent",
+  "version": "0.1.0",
+  "description": "Pie — C++20 coding agent",
+  "dependencies": [
+    { "name": "nlohmann-json", "version>=": "3.11.3" },
+    { "name": "curl", "version>=": "8.7.1" },
+    { "name": "openssl", "version>=": "3.2.1" },
+    { "name": "ftxui", "version>=": "5.0.0" },
+    { "name": "boost-interprocess", "version>=": "1.84.0" },
+    { "name": "libexif", "version>=": "0.6.24" },
+    { "name": "asio", "version>=": "1.30.2" },
+    { "name": "valijson", "version>=": "1.0.2" },
+    { "name": "rapidyaml", "version>=": "0.7.0" },
+    { "name": "tl-expected", "version>=": "1.1.0" },
+    { "name": "cli11", "version>=": "2.4.1" },
+    { "name": "efsw", "version>=": "1.0.1" },
+    { "name": "cmrc", "version>=": "2.0.1" },
+    { "name": "cpp-httplib", "version>=": "0.15.3" }
+  ],
+  "overrides": [
+    { "name": "nlohmann-json", "version": "3.11.3" },
+    { "name": "curl", "version": "8.7.1" },
+    { "name": "openssl", "version": "3.2.1" },
+    { "name": "ftxui", "version": "5.0.0" },
+    { "name": "boost-interprocess", "version": "1.84.0" },
+    { "name": "libexif", "version": "0.6.24" },
+    { "name": "asio", "version": "1.30.2" },
+    { "name": "valijson", "version": "1.0.2" },
+    { "name": "rapidyaml", "version": "0.7.0" },
+    { "name": "tl-expected", "version": "1.1.0" },
+    { "name": "cli11", "version": "2.4.1" },
+    { "name": "efsw", "version": "1.0.1" },
+    { "name": "cmrc", "version": "2.0.1" },
+    { "name": "cpp-httplib", "version": "0.15.3" }
+  ]
+}
