@@ -52,6 +52,35 @@ The compiled binary will be placed at `pie-coding-agent/build/pie`.
 
 ---
 
+## ⚙️ Configuration & Environment
+
+Pie supports automatic environment variable resolution, global config storage, and command-line overrides for flexible model and agent routing.
+
+### 1. LLM API Key Configuration
+Set provider API keys in your active shell or system environment variables. The agent will automatically detect and route them based on the active provider:
+
+| Provider | Environment Variable | Override Flag |
+| :--- | :--- | :--- |
+| **Anthropic** (Default) | `ANTHROPIC_API_KEY` | `--api-key <key>` |
+| **OpenAI** | `OPENAI_API_KEY` | `--api-key <key>` |
+| **DeepSeek** | `DEEPSEEK_API_KEY` | `--api-key <key>` |
+| **Google Gemini** | `GEMINI_API_KEY` | `--api-key <key>` |
+
+### 2. General Environment Variables
+Customize active session storage, offline validation, and external integrations with these system variables:
+
+*   `PIE_SESSION_DIR`: Overrides the default directory used to store agent conversation logs.
+*   `PIE_OFFLINE`: If set to `true`/`1`, restricts network-dependent tasks (e.g., skips package installation or update checks).
+*   `PIE_EDITOR`: Defines the preferred editor binary (e.g., `vim`, `nano`, `code`) used for interactive file editing tasks.
+
+### 3. Model & Provider CLI Overrides
+You can explicitly configure the model, provider, and API credentials per invocation:
+```bash
+./pie-coding-agent/build/pie --provider openai --model gpt-4o --api-key sk-proj-...
+```
+
+---
+
 ## 🏃 How to Run
 
 ### 1. Verify Installation
