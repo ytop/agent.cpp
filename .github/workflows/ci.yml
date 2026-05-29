@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ubuntu-debug:
+    name: Ubuntu 24.04 GCC (Debug)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake ninja-build \
+            libcurl4-openssl-dev libssl-dev \
+            nlohmann-json3-dev libcatch2-dev
+
+      - name: Configure (Debug)
+        run: |
+          cmake -S pie-coding-agent -B pie-coding-agent/build \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DPIE_INTEGRATION_TESTS=ON \
+            -G Ninja
+
+      - name: Build
+        run: cmake --build pie-coding-agent/build --parallel
+
+      - name: Run unit tests
+        run: ./pie-coding-agent/build/pie_tests
+        working-directory: ${{ github.workspace }}
+
+      - name: Run property-based tests
+        run: ./pie-coding-agent/build/pie_property_tests
+        working-directory: ${{ github.workspace }}
+        continue-on-error: false
+
+      - name: Run integration tests
+        run: ./pie-coding-agent/build/pie_integration_tests
+        working-directory: ${{ github.workspace }}
+        env:
+          PIE_INTEGRATION_TESTS: "1"
+
+      - name: Run conformance tests
+        run: ./pie-coding-agent/build/pie_conformance_tests
+        working-directory: ${{ github.workspace }}
+
+  ubuntu-release:
+    name: Ubuntu 24.04 GCC (Release)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake ninja-build \
+            libcurl4-openssl-dev libssl-dev \
+            nlohmann-json3-dev libcatch2-dev
+
+      - name: Configure (Release)
+        run: |
+          cmake -S pie-coding-agent -B pie-coding-agent/build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DPIE_INTEGRATION_TESTS=ON \
+            -G Ninja
+
+      - name: Build
+        run: cmake --build pie-coding-agent/build --parallel
+
+      - name: Smoke test: --version exits 0
+        run: ./pie-coding-agent/build/pie --version
+
+      - name: Smoke test: --help exits 0
+        run: ./pie-coding-agent/build/pie --help
+
+      - name: Run unit tests
+        run: ./pie-coding-agent/build/pie_tests
+
+      - name: Run property-based tests
+        run: ./pie-coding-agent/build/pie_property_tests
+
+      - name: Run conformance tests
+        run: ./pie-coding-agent/build/pie_conformance_tests
+
+  ubuntu-aarch64-release:
+    name: Ubuntu 24.04 aarch64 GCC (Release)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install cross-compilation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
+            cmake ninja-build qemu-user-static
+
+      - name: Configure (aarch64 Release)
+        run: |
+          cmake -S pie-coding-agent -B pie-coding-agent/build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
+            -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
+            -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
+            -G Ninja
+
+      - name: Build
+        run: cmake --build pie-coding-agent/build --parallel

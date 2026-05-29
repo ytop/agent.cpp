@@ -7,7 +7,7 @@ static const std::set<std::string> kValidCutTypes = {"message", "bashExecution",
 
 int Compactor::find_cut_point(const std::vector<core::JsonValue>& messages) {
     // Walk backwards to find last valid cut point (at least 1 message retained)
-    for (int i = static_cast<int>(messages.size()) - 2; i >= 1; --i) {
+    for (int i = static_cast<int>(messages.size()) - 1; i >= 1; --i) {
         auto& msg = messages[i];
         if (!msg.contains("type")) continue;
         auto type = msg["type"].get<std::string>();

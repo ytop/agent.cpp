@@ -1,82 +1,140 @@
 # Pie — C++20 Coding Agent
 
-A native C++20 re-implementation of the Pi coding agent, producing a single `pie` binary and an embeddable `libpie` static library.
+**Pie** is a native C++20 re-implementation of the `@earendil-works/pi-coding-agent` TypeScript application, providing the same interactive coding assistant experience with a self-contained binary.
 
-## Supported Platforms
-
-| Platform | Architecture | Status |
-|----------|-------------|--------|
-| Ubuntu 24.04 | x86_64 | Supported |
-| Ubuntu 24.04 | aarch64 | Supported |
-
-macOS and Windows are out of scope.
-
-## Requirements
-
-- **CMake** 3.27 or later
-- **gcc/g++ 13** or later (Ubuntu 24.04 default)
-- **vcpkg** (for dependency management)
-- C++20 standard support
-
-## Build
+## Quick Start
 
 ```bash
-# Set VCPKG_ROOT if not already in your environment
-export VCPKG_ROOT=/path/to/vcpkg
-
-# Configure and build (Ubuntu gcc debug)
-cmake --preset default
-cmake --build --preset default
+# Build
+cmake -S pie-coding-agent -B pie-coding-agent/build -DCMAKE_BUILD_TYPE=Release
+cmake --build pie-coding-agent/build --parallel
 
 # Verify
-./build/pie --version
+./pie-coding-agent/build/pie --version
+
+# Interactive mode
+./pie-coding-agent/build/pie
+
+# Print mode (pipe-friendly)
+echo "Explain this code" | ./pie-coding-agent/build/pie --print
+
+# JSON event stream mode
+./pie-coding-agent/build/pie --mode json "hello"
+
+# Export a session to HTML
+./pie-coding-agent/build/pie --export ~/.pie/agent/sessions/session.jsonl
+```
+
+## Prerequisites
+
+| Dependency | Version | Notes |
+|---|---|---|
+| CMake | ≥ 3.27 | Required |
+| GCC | ≥ 13 (Ubuntu) | C++23 |
+| libcurl | system | HTTP client |
+| OpenSSL | system | TLS |
+| nlohmann/json | 3.11.3 | JSON (auto-fetched) |
+| Catch2 | 3.x | Tests (auto-fetched) |
+| rapidcheck | pinned commit | Property tests (auto-fetched) |
+
+## Build Options
+
+```bash
+# Integration tests (requires /bin/sh and network for some)
+cmake -DPIE_INTEGRATION_TESTS=ON ...
+
+# Coverage build
+cmake -DCMAKE_BUILD_TYPE=Coverage ...
+make coverage  # Requires gcovr
 ```
 
 ## Project Structure
 
 ```
 pie-coding-agent/
-├── CMakeLists.txt            # Top-level CMake configuration
-├── CMakePresets.json         # Ubuntu gcc build presets
-├── vcpkg.json                # Pinned dependency manifest
-├── vcpkg-configuration.json  # vcpkg registry baseline
-├── cmake/                    # CMake modules (gcc enforcement, toolchains)
-├── include/pie/              # Public SDK headers
-├── src/                      # Source code (layered architecture)
-│   ├── core/                 # Foundation: Result, Logger, JSON, utilities
-│   ├── io/                   # I/O: HTTP, file locking, subprocess, watcher
-│   ├── wire/                 # Wire format: JSONL, YAML, JSON Schema, diff
-│   ├── auth/                 # Authentication: OAuth, API keys
-│   ├── session/              # Session management and tree navigation
-│   ├── settings/             # Settings: deep merge, env vars, first-run import
-│   ├── models/               # Model registry
-│   ├── resources/            # Resource loading: context files, skills, prompts
-│   ├── tools/                # Built-in tools and tool host
-│   ├── compaction/           # Compaction subsystem
-│   ├── queue/                # Message queue (steering/follow-up)
-│   ├── providers/            # LLM provider clients
-│   ├── tui/                  # Terminal UI (FTXUI)
-│   ├── extension_host/       # Extension lifecycle and bridge
-│   ├── sdk/                  # Public SDK facade
-│   ├── cli/                  # CLI entry point and argv parsing
-│   └── modes/                # Mode drivers
-│       ├── interactive/
-│       ├── print/
-│       ├── json/
-│       ├── rpc/
-│       └── export/
-├── runtime/                  # Embedded assets (extension runtime, themes, export HTML)
-├── tests/                    # Test suites
-│   ├── unit/
-│   ├── property/
-│   ├── integration/
-│   ├── conformance/
-│   └── fixtures/
-└── third_party/              # Vendored header-only libraries (stb, dtl)
+├── include/pie/          # Public headers
+├── src/                  # Implementation
+├── tests/
+│   ├── unit/             # Catch2 unit tests
+│   ├── property/         # rapidcheck property tests
+│   ├── integration/      # Integration tests (gated)
+│   ├── conformance/      # Wire-format conformance tests
+│   └── fixtures/         # Pi_TS-produced golden fixtures
+├── scripts/
+│   └── generate_fixtures.sh  # Generate/refresh golden fixtures
+├── docs/                 # Documentation
+└── CMakeLists.txt
 ```
 
-## Build Outputs
+## Modes
 
-- `build/pie` — Single CLI binary
-- `build/libpie.a` — Static SDK library
-- `include/pie/` — Public SDK headers
+| Mode | Flag | Description |
+|---|---|---|
+| Interactive | *(default)* | Full TUI with rich rendering |
+| Print | `--print` | Stream response text to stdout |
+| JSON | `--mode json` | Stream events as JSONL to stdout |
+| RPC | `--mode rpc` | JSON-RPC protocol on stdin/stdout |
+| Export | `--export <file>` | Render session to self-contained HTML |
+
+## CLI Reference
+
+See [docs/cli.md](docs/cli.md) for the full CLI reference.
+
+## Session Format
+
+Pie reads and writes the same JSONL session format as Pi_TS (`~/.pie/agent/sessions/`). Existing Pi_TS sessions at `~/.pi/agent/` are automatically discovered on first run.
+
+See [docs/session-format.md](docs/session-format.md).
+
+## Providers & Authentication
+
+```bash
+# Set API key
+export ANTHROPIC_API_KEY="sk-ant-..."
+export OPENAI_API_KEY="sk-..."
+
+# Or use OAuth device-code flow
+pie --provider anthropic /login
+```
+
+See [docs/providers.md](docs/providers.md).
+
+## Extensions
+
+Pie supports both:
+- **JS/TS extensions** — executed out-of-process via Node (same API as Pi_TS)
+- **Native C++ plugins** — loaded via `dlopen`
+
+```bash
+pie install npm:@my-scope/my-extension
+pie install ./local/extension
+```
+
+See [docs/extensions.md](docs/extensions.md).
+
+## Migration from Pi_TS
+
+Pie is designed for zero-friction migration. On first run it automatically imports configuration from `~/.pi/agent/` and discovers Pi_TS sessions in the legacy location.
+
+See [docs/migration.md](docs/migration.md).
+
+## Testing
+
+```bash
+# Unit tests
+./build/pie_tests
+
+# Property-based tests
+./build/pie_property_tests
+
+# Integration tests
+cmake -DPIE_INTEGRATION_TESTS=ON .. && ./build/pie_integration_tests
+
+# Conformance tests (generate fixtures first)
+bash scripts/generate_fixtures.sh
+./build/pie_conformance_tests
+```
+
+## License
+
+MIT

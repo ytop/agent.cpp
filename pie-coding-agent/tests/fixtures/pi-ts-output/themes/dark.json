@@ -1,0 +1,15 @@
+{
+  "name": "dark",
+  "version": 1,
+  "colors": {
+    "primary": "#7c3aed",
+    "secondary": "#4f46e5",
+    "background": "#0f0f0f",
+    "surface": "#1a1a1a",
+    "text": "#e2e8f0",
+    "muted": "#64748b",
+    "success": "#22c55e",
+    "error": "#ef4444",
+    "warning": "#f59e0b"
+  }
+}

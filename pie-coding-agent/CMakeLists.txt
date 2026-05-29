@@ -122,9 +122,21 @@ add_library(libpie STATIC
     src/sdk/package_manager.cpp
     src/sdk/exporter.cpp
     src/sdk/startup_checks.cpp
+    src/sdk/agent_session.cpp
+    src/sdk/agent_session_runtime.cpp
+    src/tools/define_tool.cpp
+    src/cli/cli_invocation.cpp
+    src/cli/slash_commands.cpp
+    src/cli/keybindings.cpp
+    src/modes/interactive/interactive_mode.cpp
+    src/modes/print/print_mode.cpp
+    src/modes/json/json_mode.cpp
+    src/modes/rpc/rpc_mode.cpp
+    src/modes/export/export_mode.cpp
 )
 target_include_directories(libpie PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/asio/include
 )
 target_link_libraries(libpie PUBLIC
     nlohmann_json::nlohmann_json
@@ -171,8 +183,16 @@ enable_testing()
 add_executable(pie_tests
     tests/unit/phase2_test.cpp
     tests/unit/phase3_test.cpp
+    tests/unit/phase4_test.cpp
+    tests/unit/phase5_test.cpp
+    tests/unit/phase6_test.cpp
+    tests/unit/test_verbose_banner.cpp
 )
 target_link_libraries(pie_tests PRIVATE libpie Catch2::Catch2WithMain)
+target_compile_definitions(pie_tests PRIVATE
+    PIE_BINARY_PATH="${CMAKE_BINARY_DIR}/pie"
+    PIE_FIXTURES_DIR="${CMAKE_SOURCE_DIR}/tests/fixtures"
+)
 set_target_properties(pie_tests PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
 )
@@ -180,3 +200,70 @@ set_target_properties(pie_tests PROPERTIES
 include(CTest)
 include(Catch)
 catch_discover_tests(pie_tests)
+
+# --------------------------------------------------------------------------
+# Property-based tests (rapidcheck + Catch2)
+# --------------------------------------------------------------------------
+include(cmake/FetchRapidcheck.cmake)
+
+file(GLOB PROPERTY_TEST_SRCS "tests/property/p*.cpp")
+if(PROPERTY_TEST_SRCS)
+    add_executable(pie_property_tests ${PROPERTY_TEST_SRCS})
+    target_link_libraries(pie_property_tests PRIVATE
+        libpie
+        Catch2::Catch2WithMain
+        rapidcheck
+        rapidcheck_catch
+    )
+    target_include_directories(pie_property_tests PRIVATE
+        ${rapidcheck_SOURCE_DIR}/extras/catch/include
+    )
+    set_target_properties(pie_property_tests PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+    catch_discover_tests(pie_property_tests)
+endif()
+
+# --------------------------------------------------------------------------
+# Integration tests (gated by PIE_INTEGRATION_TESTS option)
+# --------------------------------------------------------------------------
+option(PIE_INTEGRATION_TESTS "Build and register integration tests" OFF)
+if(PIE_INTEGRATION_TESTS)
+    file(GLOB INTEGRATION_TEST_SRCS "tests/integration/test_*.cpp")
+    if(INTEGRATION_TEST_SRCS)
+        add_executable(pie_integration_tests ${INTEGRATION_TEST_SRCS})
+        target_link_libraries(pie_integration_tests PRIVATE
+            libpie
+            Catch2::Catch2WithMain
+        )
+        set_target_properties(pie_integration_tests PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+        )
+        catch_discover_tests(pie_integration_tests)
+    endif()
+endif()
+
+# --------------------------------------------------------------------------
+# Conformance tests
+# --------------------------------------------------------------------------
+file(GLOB CONFORMANCE_TEST_SRCS "tests/conformance/test_*.cpp")
+if(CONFORMANCE_TEST_SRCS)
+    add_executable(pie_conformance_tests ${CONFORMANCE_TEST_SRCS})
+    target_link_libraries(pie_conformance_tests PRIVATE
+        libpie
+        Catch2::Catch2WithMain
+    )
+    target_compile_definitions(pie_conformance_tests PRIVATE
+        PIE_FIXTURES_DIR="${CMAKE_SOURCE_DIR}/tests/fixtures"
+        PIE_BINARY_PATH="${CMAKE_BINARY_DIR}/pie"
+    )
+    set_target_properties(pie_conformance_tests PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+    catch_discover_tests(pie_conformance_tests)
+endif()
+
+# --------------------------------------------------------------------------
+# Coverage support (optional, use -DCMAKE_BUILD_TYPE=Coverage)
+# --------------------------------------------------------------------------
+include(cmake/Coverage.cmake)

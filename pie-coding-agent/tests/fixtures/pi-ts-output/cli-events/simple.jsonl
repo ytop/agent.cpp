@@ -1,0 +1,5 @@
+{"type":"session_header","sessionId":"a1b2c3d4","model":"claude-opus-4-5","provider":"anthropic","timestamp":"2024-01-01T00:00:00.000Z"}
+{"type":"agent_start","timestamp":"2024-01-01T00:00:01.000Z"}
+{"type":"message_delta","role":"assistant","content":"Hello! ","timestamp":"2024-01-01T00:00:01.100Z"}
+{"type":"message_delta","role":"assistant","content":"How can I help you?","timestamp":"2024-01-01T00:00:01.500Z"}
+{"type":"agent_end","status":"success","costUSD":0.001,"durationMs":1200,"timestamp":"2024-01-01T00:00:02.000Z"}

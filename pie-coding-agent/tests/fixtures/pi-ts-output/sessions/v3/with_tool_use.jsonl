@@ -1,0 +1,4 @@
+{"type":"session","version":3,"id":"d4e5f6a7","timestamp":"2024-01-02T00:00:00.000Z","cwd":"/home/user/project","model":"claude-opus-4-5","provider":"anthropic"}
+{"type":"message","id":"e5f6a7b8","parentId":"d4e5f6a7","timestamp":"2024-01-02T00:00:01.000Z","message":{"role":"user","content":"List files"},"costUSD":null,"durationMs":null}
+{"type":"message","id":"f6a7b8c9","parentId":"e5f6a7b8","timestamp":"2024-01-02T00:00:02.000Z","message":{"role":"assistant","content":[{"type":"tool_use","id":"tu_001","name":"bash","input":{"command":"ls -la"}}]},"costUSD":0.002,"durationMs":800}
+{"type":"message","id":"a7b8c9d0","parentId":"f6a7b8c9","timestamp":"2024-01-02T00:00:03.000Z","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"tu_001","content":"total 0\ndrwxr-xr-x 2 user user 40 Jan 2 00:00 ."}]},"costUSD":null,"durationMs":null}

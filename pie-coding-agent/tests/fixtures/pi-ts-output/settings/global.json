@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "autoCompact": true,
+  "theme": "dark",
+  "verbose": false,
+  "model": null,
+  "thinking": null,
+  "maxContextTokens": null
+}

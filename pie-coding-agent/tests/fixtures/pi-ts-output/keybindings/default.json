@@ -1,0 +1,14 @@
+{
+  "app.clear": "Ctrl+C",
+  "app.exit": "Ctrl+C",
+  "app.interrupt": "Esc",
+  "doubleEscapeAction": "tree",
+  "app.model.select": "Ctrl+L",
+  "app.model.cycleForward": "Ctrl+P",
+  "app.model.cycleBackward": "Shift+Ctrl+P",
+  "app.thinking.cycle": "Shift+Tab",
+  "app.tools.expand": "Ctrl+O",
+  "app.thinking.toggle": "Ctrl+T",
+  "editor.cursor.up": "Up",
+  "editor.cursor.down": "Down"
+}
