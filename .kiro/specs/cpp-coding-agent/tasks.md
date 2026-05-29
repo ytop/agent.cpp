@@ -2,7 +2,7 @@
 
 ## Overview
 
-This plan implements Pie_Cpp — a clean C++20 re-implementation of the Pi_TS coding agent — in 103 tasks organized into 7 bottom-up phases. Each phase builds on the previous so the binary remains compilable after every task. The 7 phases are: (1) Project Scaffolding & Build System, (2) Foundation Layer, (3) Domain Layer, (4) Subsystems, (5) SDK Facade, (6) CLI & Modes, and (7) Verification & Polish. Property-based tests (36 properties, ≥100 iterations each using rapidcheck) and conformance tests against Pi_TS-produced fixtures are in Phase 7.
+This plan implements Pie_Cpp — a clean C++20 re-implementation of the Pi_TS coding agent targeting Ubuntu 24.04 with gcc 13+ — in 103 tasks organized into 7 bottom-up phases. Each phase builds on the previous so the binary remains compilable after every task. The 7 phases are: (1) Project Scaffolding & Build System, (2) Foundation Layer, (3) Domain Layer, (4) Subsystems, (5) SDK Facade, (6) CLI & Modes, and (7) Verification & Polish. Property-based tests (36 properties, ≥100 iterations each using rapidcheck) and conformance tests against Pi_TS-produced fixtures are in Phase 7.
 
 ## Tasks
 
@@ -13,10 +13,10 @@ This plan implements Pie_Cpp — a clean C++20 re-implementation of the Pi_TS co
   _Requirements: 1.1, 1.2, 1.4, 1.5, 1.6_
   _Design: Build & Distribution > CMake structure / vcpkg.json_
 
-- [x] 2. Apple clang 17.0.0 enforcement script
-  *Adds `cmake/ApplePinClang.cmake` that reads `--version`, regex-matches `Apple clang version 17.0.0`, and calls `message(FATAL_ERROR)` with the detected vs required version before any source file is compiled.*
+- [x] 2. Ubuntu gcc 13+ enforcement script
+  *Adds `cmake/UbuntuGcc.cmake` that verifies the system is Linux, the compiler is GNU gcc/g++, and the version is ≥ 13. Calls `message(FATAL_ERROR)` before any source file is compiled if checks fail.*
   _Requirements: 1.11_
-  _Design: Build & Distribution > Apple clang enforcement_
+  _Design: Build & Distribution > gcc enforcement_
 
 - [x] 3. Vendor third-party header-only libraries
   *Copies `stb_image.h`, `stb_image_resize2.h` (commit `5c20573`), and `dtl/dtl.hpp` (commit `f3a1b22`) into `third_party/` with a `VERSIONS.md` recording exact commit hashes.*
@@ -29,168 +29,168 @@ This plan implements Pie_Cpp — a clean C++20 re-implementation of the Pi_TS co
   _Design: Build & Distribution > Build outputs_
 
 - [x] 5. `pie --version` stub binary (Phase 1 integration check)
-  *Adds a minimal `src/cli/main.cpp` that parses `--version` via CLI11 and exits 0 printing a version string. Wires the `pie` executable target in CMake. Confirms `pie-coding-agent/build/pie --version` exits 0 within 5 s on macOS arm64.*
+  *Adds a minimal `src/cli/main.cpp` that parses `--version` via CLI11 and exits 0 printing a version string. Wires the `pie` executable target in CMake. Confirms `pie-coding-agent/build/pie --version` exits 0 within 5 s on Ubuntu 24.04.*
   _Requirements: 1.3, 1.7, 1.9_
   _Design: CLI Layer > Dispatch table_
 
 - [ ] 6. CI matrix skeleton
-  *Adds GitHub Actions (or equivalent) workflow files for macOS arm64 debug, macOS arm64 release, macOS x86_64 release, Linux x86_64 release, and Linux aarch64 release. Each job installs vcpkg, runs CMake configure + build, and runs `pie --version`.*
+  *Adds GitHub Actions workflow with three Ubuntu 24.04 gcc jobs: x86_64 debug, x86_64 release, and aarch64 release. Each job installs vcpkg, runs CMake configure + build, and runs `pie --version`.*
   _Requirements: 1.3, 1.5, 1.10_
   _Design: Build & Distribution > CI matrix_
 
 
 ### Phase 2: Foundation Layer
 
-- [ ] 7. `pie::core` — Result type, Logger, and primitive utilities
+- [x] 7. `pie::core` — Result type, Logger, and primitive utilities
   *Implements `pie::Result<T,E>` (tl::expected typedef), `pie::core::ErrorInfo` with Category enum, `pie::core::Logger` (stderr + debug-log-file + `--verbose` flag), UUID v4 generator, 8-char hex ID generator, ISO-8601 timestamp helpers, and path normalization utilities.*
   _Requirements: 24.1, 24.2, 24.4, 24.5, 24.6_
   _Design: Components and Interfaces > Diagnostics / logging_
 
-- [ ] 8. `pie::core::JsonValue` — nlohmann/ordered_json wrapper
+- [x] 8. `pie::core::JsonValue` — nlohmann/ordered_json wrapper
   *Wraps `nlohmann::ordered_json` in a `pie::core::JsonValue` type that preserves insertion order (for round-trip key order), exposes a `raw` field pattern, and provides `get<T>`, `contains`, `items`, `is_object`, `is_array` helpers used throughout the codebase.*
   _Requirements: 3.11, 3.12, 3.13, 23.7_
   _Design: Technology Stack (nlohmann/json)_
 
-- [ ] 9. `pie::io::FileLock` — proper-lockfile-equivalent file locking
+- [x] 9. `pie::io::FileLock` — proper-lockfile-equivalent file locking
   *Implements the `<file>.lock` sibling-file convention: `open(O_CREAT|O_EXCL)`, 50 ms retry up to 10 s, 10 s stale threshold, `unlink` on release. Writes `<pid>\n` to the lockfile for cross-process visibility.*
   _Requirements: 3.10_
   _Design: Components and Interfaces > Session subsystem > File locking_
 
-- [ ] 10. `pie::wire::JsonlParser` and `pie::wire::JsonlSerializer`
+- [x] 10. `pie::wire::JsonlParser` and `pie::wire::JsonlSerializer`
   *Implements the line-oriented JSONL parser (returns `(line_no, JsonValue)` or `ErrorInfo` per Req 3.14) and the canonical serializer (no insignificant whitespace, documented key order per entry type, single `\n` terminator, byte-identical across runs).*
   _Requirements: 3.4, 3.13, 3.14_
   _Design: Components and Interfaces > Session subsystem > JSONL parser and serializer_
 
-- [ ] 11. `pie::io::HttpClient` — libcurl wrapper
+- [x] 11. `pie::io::HttpClient` — libcurl wrapper
   *Wraps libcurl with a `pie::io::HttpClient` supporting GET/POST with headers, SSE chunked callbacks, 2000 ms timeout for telemetry/update-check calls, and OpenSSL TLS verification enabled by default.*
   _Requirements: 21.1, 21.2, 21.6_
   _Design: Technology Stack (libcurl, OpenSSL)_
 
-- [ ] 12. `pie::io::Subprocess` — posix_spawn wrapper
+- [x] 12. `pie::io::Subprocess` — posix_spawn wrapper
   *Wraps `posix_spawnp` with `posix_spawn_file_actions_t` for stdout/stderr pipe redirection, argv-array construction (no shell interpolation), environment inheritance, and a `wait()` method returning exit code.*
   _Requirements: 12.1, 12.8_
   _Design: Technology Stack (posix_spawn)_
 
-- [ ] 13. `pie::io::FsWatcher` — efsw-based filesystem watcher
+- [x] 13. `pie::io::FsWatcher` — efsw-based filesystem watcher
   *Wraps efsw to watch a directory for file changes, debounced at 200 ms, firing a callback with the changed path. Used for theme hot reload.*
   _Requirements: 15.4, 15.6_
   _Design: Technology Stack (efsw)_
 
-- [ ] 14. `pie::wire::YamlFrontmatter` — rapidyaml frontmatter parser
+- [x] 14. `pie::wire::YamlFrontmatter` — rapidyaml frontmatter parser
   *Parses YAML frontmatter delimited by `---` lines from a Markdown string, extracting a `JsonValue` of key-value pairs. Used for prompt templates and SKILL.md files.*
   _Requirements: 13.10, 14.2_
   _Design: Technology Stack (rapidyaml)_
 
-- [ ] 15. `pie::wire::JsonSchemaValidator` — valijson adapter
+- [x] 15. `pie::wire::JsonSchemaValidator` — valijson adapter
   *Wraps valijson with a nlohmann/json adapter to validate a `JsonValue` against a JSON Schema object. Returns a list of validation errors or success.*
   _Requirements: 22.7_
   _Design: Technology Stack (valijson)_
 
-- [ ] 16. `pie::wire::Globber` — glob/fnmatch with `**` support
+- [x] 16. `pie::wire::Globber` — glob/fnmatch with `**` support
   *Wraps POSIX `glob.h` and adds a custom `**` recursive-match layer to match Pi_TS's `glob` + `minimatch` behavior. Used for settings `extensions`/`skills`/`prompts`/`themes` array patterns.*
   _Requirements: 5.5_
   _Design: Technology Stack (Glob / fnmatch)_
 
-- [ ] 17. `pie::wire::Diff` — dtl Myers diff wrapper
+- [x] 17. `pie::wire::Diff` — dtl Myers diff wrapper
   *Wraps dtl to produce a unified-diff string from two text inputs, matching Pi_TS's `edit` tool `details.diff` output format.*
   _Requirements: 7.4_
   _Design: Technology Stack (dtl)_
 
-- [ ] 18. Phase 2 integration check — foundation layer compiles clean, unit tests green
-  *Adds Catch2 unit tests for JsonlParser (round-trip of each entry type), FileLock (acquire/release/stale), YamlFrontmatter (basic + missing description), JsonSchemaValidator (valid + invalid schema), Globber (`**` patterns), and Diff (unified output). All pass on macOS arm64.*
+- [x] 18. Phase 2 integration check — foundation layer compiles clean, unit tests green
+  *Adds Catch2 unit tests for JsonlParser (round-trip of each entry type), FileLock (acquire/release/stale), YamlFrontmatter (basic + missing description), JsonSchemaValidator (valid + invalid schema), Globber (`**` patterns), and Diff (unified output). All pass on Ubuntu 24.04.*
   _Requirements: 3.14, 9.10_
   _Design: Testing Strategy > Unit tests_
 
 
 ### Phase 3: Domain Layer
 
-- [ ] 19. `pie::auth::AuthStorage` — auth.json read/write and API-key resolution chain
+- [x] 19. `pie::auth::AuthStorage` — auth.json read/write and API-key resolution chain
   *Implements `AuthStorage::create()`, `resolve_api_key(provider)` with precedence runtime > stored > env > fallback, `set_runtime_api_key`, `store_oauth`, `remove_provider`, and `auth.json` read/write preserving unknown keys. Creates `auth.json` with mode `0600`.*
   _Requirements: 6.1, 6.4, 6.5, 6.7, 6.8, 6.14_
   _Design: Components and Interfaces > Auth subsystem_
 
-- [ ] 20. All 25+ API-key provider descriptors
+- [x] 20. All 25+ API-key provider descriptors
   *Registers a `ProviderDescriptor` for each of the 25+ API-key providers listed in Req 6.3 (Anthropic, OpenAI, Azure OpenAI, DeepSeek, Google Gemini, Google Vertex, Amazon Bedrock, Mistral, Groq, Cerebras, Cloudflare AI Gateway, Cloudflare Workers AI, xAI, OpenRouter, Vercel AI Gateway, ZAI, OpenCode Zen, OpenCode Go, Hugging Face, Fireworks, Together AI, Kimi For Coding, MiniMax, Xiaomi MiMo + 3 Token Plan regional variants). Each descriptor records the env-var name, provider id, and default endpoint.*
   _Requirements: 6.3_
   _Design: Components and Interfaces > Auth subsystem_
 
-- [ ] 21. OAuth device-code flows — Anthropic, OpenAI Codex, GitHub Copilot
+- [x] 21. OAuth device-code flows — Anthropic, OpenAI Codex, GitHub Copilot
   *Implements `AnthropicOAuth`, `OpenAICodexOAuth`, `GithubCopilotOAuth` as `asio::awaitable` coroutines polling between 1–5 s with a 300 s hard ceiling. On success persists tokens to `auth.json`. On timeout/cancel/error emits a diagnostic and leaves `auth.json` unchanged.*
   _Requirements: 6.2, 6.7_
   _Design: Components and Interfaces > Auth subsystem_
 
-- [ ] 22. OAuth token refresh (60-second window)
+- [x] 22. OAuth token refresh (60-second window)
   *Implements `AuthStorage::refresh_if_needed(provider)` that initiates a refresh when `expires_at_ms - now_ms ≤ 60_000`, persists refreshed tokens, and returns the unrefreshed credentials with an error on failure.*
   _Requirements: 6.6_
   _Design: Components and Interfaces > Auth subsystem_
 
-- [ ] 23. `pie::session::SessionFile` — JSONL read, atomic crash-safe append, and file locking
+- [x] 23. `pie::session::SessionFile` — JSONL read, atomic crash-safe append, and file locking
   *Implements `SessionFile::open`, `SessionFile::create`, `SessionFile::append` (acquire FileLock → lseek-to-end → write full line → fsync → release lock), and `SessionFile::rewrite_v1_or_v2_to_v3` (write to `.tmp` then `rename(2)`).*
   _Requirements: 3.3, 3.4, 3.9, 3.10, 3.15_
   _Design: Components and Interfaces > Session subsystem > File locking / Atomic append_
 
-- [ ] 24. `pie::session::SessionTree` — tree navigation and `buildSessionContext`
+- [x] 24. `pie::session::SessionTree` — tree navigation and `buildSessionContext`
   *Implements `SessionTree` with `leaf_id`, `get`, `branch_to_root`, `children`, `label`, `set_leaf`, `append`, and `build_session_context` following the algorithm in `coding-agent/docs/session-format.md` (walk leaf→root, extract model/thinking, apply compaction cut, convert branch_summary/custom_message).*
   _Requirements: 4.4, 4.5, 4.7, 4.8, 4.9, 4.10, 4.11, 4.12, 4.13_
   _Design: Components and Interfaces > Session subsystem_
 
-- [ ] 25. `pie::session::SessionManager` — full public API surface
+- [x] 25. `pie::session::SessionManager` — full public API surface
   *Implements all static factories (`create`, `open`, `continueRecent`, `inMemory`, `forkFrom`), listing methods (`list`, `listAll`), all `append_*` methods returning 8-char hex IDs, all tree-navigation methods, context/info methods, and session-management methods per Req 4.*
   _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
   _Design: Components and Interfaces > Session subsystem_
 
-- [ ] 26. Session migration v1 → v3 on load
+- [x] 26. Session migration v1 → v3 on load
   *Implements `SessionFile` v1 migration: walk entries in file order, assign fresh `EntryId` to each, set `parentId` to the previous entry's id (null for first). Holds migrated tree in memory; writes v3 only on next persist. Leaves original file untouched on failure.*
   _Requirements: 23.1, 23.3, 23.4_
   _Design: Components and Interfaces > Session subsystem > Migration v1/v2 → v3_
 
-- [ ] 27. Session migration v2 → v3 on load
+- [x] 27. Session migration v2 → v3 on load
   *Implements `SessionFile` v2 migration: rename `hookMessage` role to `custom` on each matching message entry, preserving all other fields byte-equivalent. Handles unsupported/future version (> 3 or missing) by refusing to load with an error.*
   _Requirements: 23.2, 23.3, 23.5_
   _Design: Components and Interfaces > Session subsystem > Migration v1/v2 → v3_
 
-- [ ] 28. `pie::settings::SettingsManager` — deep merge, env resolver, and persistence
+- [x] 28. `pie::settings::SettingsManager` — deep merge, env resolver, and persistence
   *Implements `SettingsManager::create` (loads global + project layers), `in_memory`, `deep_merge` (pure function), `effective()`, `get`/`set`, async `flush` (write to `<file>.tmp` then `rename`), `drain_errors`, and `apply_overrides`. Recognizes all settings from `coding-agent/docs/settings.md`.*
   _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.14, 5.15_
   _Design: Components and Interfaces > Settings subsystem_
 
-- [ ] 29. Environment variable resolver with tristate parsing
+- [x] 29. Environment variable resolver with tristate parsing
   *Implements `EnvResolver` reading `PIE_CODING_AGENT_DIR`, `PIE_CODING_AGENT_SESSION_DIR`, `PIE_PACKAGE_DIR`, `PIE_OFFLINE`, `PIE_SKIP_VERSION_CHECK`, `PIE_TELEMETRY`, `PIE_CACHE_RETENTION`, `VISUAL`, `EDITOR`, `PIE_SHARE_VIEWER_URL`. Boolean vars return `Tristate{Unset, Truthy, Falsy}` per the case-insensitive value table in Req 5.9.*
   _Requirements: 5.7, 5.8, 5.9, 5.10, 5.11_
   _Design: Components and Interfaces > Settings subsystem > Environment variables_
 
-- [ ] 30. First-run import from `~/.pi/agent` to `~/.pie/agent`
+- [x] 30. First-run import from `~/.pi/agent` to `~/.pie/agent`
   *Implements `pie::settings::FirstRunImport::run(agent_dir, ts_agent_dir)`: probes `<Agent_Dir>` for all canonical files, probes `~/.pi/agent/` if all absent, copies matching files/dirs verbatim, writes `.import-from-pi.json` marker. Session discovery merges both `<Session_Dir>` and `~/.pi/agent/sessions/` for `--continue`/`--resume`.*
   _Requirements: 23.8, 23.9_
   _Design: Components and Interfaces > Settings subsystem > First-run import_
 
-- [ ] 31. `pie::models::ModelRegistry` — built-in model list codegen and models.json merge
+- [x] 31. `pie::models::ModelRegistry` — built-in model list codegen and models.json merge
   *Adds `scripts/sync-builtin-models.mjs` (build-time codegen from Pi_TS reference commit → `builtin_models.gen.cpp`). Implements `ModelRegistry::create`, `find`, `get_available` (filtered by valid creds), `all`, and `parse_selector` for `[provider/]id[:thinking]` patterns.*
   _Requirements: 6.9, 6.10, 6.11, 6.12_
   _Design: Components and Interfaces > Model registry_
 
-- [ ] 32. `pie::resources::ResourceLoader` — AGENTS.md / CLAUDE.md / SYSTEM.md discovery
+- [x] 32. `pie::resources::ResourceLoader` — AGENTS.md / CLAUDE.md / SYSTEM.md discovery
   *Implements discovery of `AGENTS.md` and `CLAUDE.md` in the documented order (Agent_Dir → ancestors from FS root → cwd), concatenation with `\n` separator, `SYSTEM.md` / `APPEND_SYSTEM.md` override logic (project > global), and `--system-prompt` / `--append-system-prompt` CLI overrides.*
   _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.12_
   _Design: Components and Interfaces > Context files / system prompt / prompt templates_
 
-- [ ] 33. Prompt templates — discovery, frontmatter, and `{{variable}}` substitution
+- [x] 33. Prompt templates — discovery, frontmatter, and `{{variable}}` substitution
   *Implements non-recursive `*.md` discovery from `<Agent_Dir>/prompts/`, `<cwd>/.pie/prompts/`, and Pie_Package prompt dirs with project > user > package precedence. Parses YAML frontmatter (`description`, `argument-hint`). Substitutes `{{variable}}` from CLI arg or interactive prompt. Emits diagnostic and leaves buffer unchanged on missing variable.*
   _Requirements: 13.7, 13.8, 13.9, 13.10, 13.11_
   _Design: Components and Interfaces > Context files / system prompt / prompt templates_
 
-- [ ] 34. Skills — discovery, validation, progressive disclosure, and `/skill:<name>` dispatch
+- [x] 34. Skills — discovery, validation, progressive disclosure, and `/skill:<name>` dispatch
   *Implements the seven-source discovery order (Req 14.1), `SKILL.md` validation (missing `description` → skip + diagnostic), name-collision first-wins-with-warning, system-prompt injection of name+description only (not full body), `disable-model-invocation` frontmatter handling, `/skill:<name> [args]` injection, unknown-skill-name error path, and `--no-skills` / `enableSkillCommands: false` behavior.*
   _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7, 14.8, 14.9_
   _Design: Components and Interfaces > Skills_
 
-- [ ] 35. Themes — discovery, conflict resolution, hot reload, and error handling
+- [x] 35. Themes — discovery, conflict resolution, hot reload, and error handling
   *Implements top-level `.json` discovery from `<Agent_Dir>/themes/`, `<cwd>/.pie/themes/`, and Pie_Package theme dirs with project > user > package precedence. Registers built-in `dark` and `light` themes from embedded constexpr JSON. Wires `FsWatcher` for hot reload within 1000 ms. Retains previous theme on reload failure.*
   _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7_
   _Design: Components and Interfaces > Themes_
 
-- [ ] 36. Phase 3 integration check — domain layer compiles clean, unit tests green
-  *Adds Catch2 unit tests for AuthStorage (API-key precedence chain, `auth.json` round-trip), SessionManager (append → branch → buildSessionContext), SettingsManager (deep merge, env resolver, flush), ModelRegistry (find, parse_selector), ResourceLoader (AGENTS.md discovery order, SYSTEM.md override), and FirstRunImport (marker file creation). All pass on macOS arm64.*
+- [x] 36. Phase 3 integration check — domain layer compiles clean, unit tests green
+  *Adds Catch2 unit tests for AuthStorage (API-key precedence chain, `auth.json` round-trip), SessionManager (append → branch → buildSessionContext), SettingsManager (deep merge, env resolver, flush), ModelRegistry (find, parse_selector), ResourceLoader (AGENTS.md discovery order, SYSTEM.md override), and FirstRunImport (marker file creation). All pass on Ubuntu 24.04.*
   _Requirements: 5.12, 5.13, 6.14_
   _Design: Testing Strategy > Unit tests_
 
@@ -272,8 +272,8 @@ This plan implements Pie_Cpp — a clean C++20 re-implementation of the Pi_TS co
   _Requirements: 11.6_
   _Design: Components and Interfaces > TUI runtime_
 
-- [ ] 52. `pie::tui::ImageRenderer` — Kitty, iTerm2, Sixel, and placeholder
-  *Implements `ImageRenderer::detect()` (Kitty → iTerm2 → Sixel → Placeholder via `TERM`, `KITTY_WINDOW_ID`, `TERM_PROGRAM`, DA1/DA2 query) and `render(ImageData, width_cells)` emitting the appropriate escape sequence directly to stdout after the FTXUI frame flush.*
+- [ ] 52. `pie::tui::ImageRenderer` — Kitty, Sixel, and placeholder
+  *Implements `ImageRenderer::detect()` (Kitty → Sixel → Placeholder via `TERM`, `KITTY_WINDOW_ID`, DA1/DA2 query) and `render(ImageData, width_cells)` emitting the appropriate escape sequence directly to stdout after the FTXUI frame flush.*
   _Requirements: 11.8, 20.7, 20.8_
   _Design: Components and Interfaces > TUI runtime / Image handling_
 
@@ -318,7 +318,7 @@ This plan implements Pie_Cpp — a clean C++20 re-implementation of the Pi_TS co
   _Design: Components and Interfaces > Telemetry / update checks_
 
 - [ ] 61. Phase 4 integration check — subsystems compile clean, unit tests green
-  *Adds Catch2 unit tests for ToolHost (allowlist enforcement), BashExecutor (truncation, spawn failure), Compactor (cut-point selection), MessageQueue (drain modes), ImagePipeline (decode + resize + EXIF), ImageRenderer (protocol detection), PackageManager (source parser), Exporter (no external resource refs in output). All pass on macOS arm64.*
+  *Adds Catch2 unit tests for ToolHost (allowlist enforcement), BashExecutor (truncation, spawn failure), Compactor (cut-point selection), MessageQueue (drain modes), ImagePipeline (decode + resize + EXIF), ImageRenderer (protocol detection), PackageManager (source parser), Exporter (no external resource refs in output). All pass on Ubuntu 24.04.*
   _Requirements: 7.13, 9.9, 9.10, 12.3_
   _Design: Testing Strategy > Unit tests_
 
@@ -517,7 +517,7 @@ This plan implements Pie_Cpp — a clean C++20 re-implementation of the Pi_TS co
   _Design: Testing Strategy > Conformance tests_
 
 - [ ] 99. Coverage collection and reporting
-  *Configures CMake to build with `-fprofile-instr-generate -fcoverage-mapping` in the `Coverage` preset. Adds a CI step that runs `llvm-cov report` and produces a Markdown summary + `coverage.json`. Verifies ≥80% line coverage for `pie::core`, `pie::wire`, `pie::session`, `pie::settings`, `pie::queue`, `pie::tools`.*
+  *Configures CMake to build with `--coverage` (gcov) in the `Coverage` preset. Adds a CI step that runs `gcovr` and produces a Markdown summary + `coverage.json`. Verifies ≥80% line coverage for `pie::core`, `pie::wire`, `pie::session`, `pie::settings`, `pie::queue`, `pie::tools`.*
   _Requirements: 1.3_
   _Design: Testing Strategy > Coverage targets_
 
@@ -526,8 +526,8 @@ This plan implements Pie_Cpp — a clean C++20 re-implementation of the Pi_TS co
   _Requirements: 24.2_
   _Design: Error Handling > --verbose output_
 
-- [ ] 101. Full CI matrix — all four configurations green
-  *Confirms all four CI jobs (macOS arm64 debug, macOS arm64 release, macOS x86_64 release, Linux x86_64 release) run the full unit + property + integration + conformance test suites and all pass. Adds Linux aarch64 cross-compile job (unit + property + integration only).*
+- [ ] 101. Full CI matrix — all configurations green
+  *Confirms all three Ubuntu 24.04 gcc CI jobs (x86_64 debug, x86_64 release, aarch64 release) run the full unit + property + integration + conformance test suites and all pass.*
   _Requirements: 1.3, 1.5, 1.10_
   _Design: Build & Distribution > CI matrix_
 
@@ -537,7 +537,7 @@ This plan implements Pie_Cpp — a clean C++20 re-implementation of the Pi_TS co
   _Design: Open Questions / Trade-offs (documentation)_
 
 - [ ] 103. Phase 7 final integration check — all tests green, no regressions
-  *Runs the complete test suite (unit + property + integration + conformance) on macOS arm64 release. Verifies `pie --version` exits 0, `pie --help` exits 0, `pie --mode json` emits a valid Session_Header as the first line, and `pie --export <v3-fixture>` produces a self-contained HTML file with no external resource references.*
+  *Runs the complete test suite (unit + property + integration + conformance) on Ubuntu 24.04 gcc release. Verifies `pie --version` exits 0, `pie --help` exits 0, `pie --mode json` emits a valid Session_Header as the first line, and `pie --export <v3-fixture>` produces a self-contained HTML file with no external resource references.*
   _Requirements: 1.3, 1.9, 2.6, 19.3_
   _Design: Testing Strategy_
 
@@ -600,4 +600,4 @@ This plan implements Pie_Cpp — a clean C++20 re-implementation of the Pi_TS co
 - Conformance fixtures (tasks 96–98) are produced by running Pi_TS at the spec's reference commit against scripted inputs and checking the output into `tests/fixtures/pi-ts-output/`. These fixtures are the ground truth for wire-format compatibility.
 - The `coding-agent/` directory must never be modified by any task. Tasks 4 and 31 read from it at build time only (theme JSON copy, model list codegen); all other tasks are independent of it.
 - Tasks 54–57 (extension host) require `node >= 22.19.0` to be present on the CI runner for JS-extension integration tests. The binary itself does not require Node at runtime for `pie --version` (Req 1.9).
-- The Apple clang 17.0.0 enforcement (task 2) runs at CMake configure time and halts before any compilation if the wrong compiler is detected. Linux CI jobs use clang 17.0.0 or gcc 13.2 as documented in the design.
+- The Ubuntu gcc 13+ enforcement (task 2) runs at CMake configure time and halts before any compilation if the wrong compiler or platform is detected. Only Ubuntu 24.04 with gcc is supported; macOS and Windows are out of scope.

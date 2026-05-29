@@ -6,16 +6,15 @@ A native C++20 re-implementation of the Pi coding agent, producing a single `pie
 
 | Platform | Architecture | Status |
 |----------|-------------|--------|
-| macOS 13+ | arm64 (Apple Silicon) | Primary |
-| macOS 13+ | x86_64 | Secondary |
-| Linux | x86_64 | Supported |
-| Linux | aarch64 | Supported |
-| Windows | — | Out of scope |
+| Ubuntu 24.04 | x86_64 | Supported |
+| Ubuntu 24.04 | aarch64 | Supported |
+
+macOS and Windows are out of scope.
 
 ## Requirements
 
 - **CMake** 3.27 or later
-- **Apple clang 17.0.0** (macOS) or clang 17 / gcc 13.2 (Linux)
+- **gcc/g++ 13** or later (Ubuntu 24.04 default)
 - **vcpkg** (for dependency management)
 - C++20 standard support
 
@@ -25,9 +24,9 @@ A native C++20 re-implementation of the Pi coding agent, producing a single `pie
 # Set VCPKG_ROOT if not already in your environment
 export VCPKG_ROOT=/path/to/vcpkg
 
-# Configure and build (macOS arm64 debug)
-cmake --preset macos-arm64-debug
-cmake --build --preset macos-arm64-debug
+# Configure and build (Ubuntu gcc debug)
+cmake --preset default
+cmake --build --preset default
 
 # Verify
 ./build/pie --version
@@ -38,10 +37,10 @@ cmake --build --preset macos-arm64-debug
 ```
 pie-coding-agent/
 ├── CMakeLists.txt            # Top-level CMake configuration
-├── CMakePresets.json         # Build presets for all platforms
+├── CMakePresets.json         # Ubuntu gcc build presets
 ├── vcpkg.json                # Pinned dependency manifest
 ├── vcpkg-configuration.json  # vcpkg registry baseline
-├── cmake/                    # CMake modules (clang enforcement, toolchains)
+├── cmake/                    # CMake modules (gcc enforcement, toolchains)
 ├── include/pie/              # Public SDK headers
 ├── src/                      # Source code (layered architecture)
 │   ├── core/                 # Foundation: Result, Logger, JSON, utilities

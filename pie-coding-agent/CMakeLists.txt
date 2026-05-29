@@ -7,9 +7,9 @@ project(pie-coding-agent
 )
 
 # --------------------------------------------------------------------------
-# C++20 standard, enforced globally
+# C++23 standard, enforced globally
 # --------------------------------------------------------------------------
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -22,9 +22,9 @@ if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 endif()
 
 # --------------------------------------------------------------------------
-# Apple clang version enforcement (Req 1.11)
+# Ubuntu gcc toolchain enforcement
 # --------------------------------------------------------------------------
-include(cmake/ApplePinClang.cmake)
+include(cmake/UbuntuGcc.cmake)
 
 # --------------------------------------------------------------------------
 # Global compile options
@@ -37,14 +37,15 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 # Required for Phase 1 (pie binary)
 find_package(CLI11 CONFIG REQUIRED)
 
+# Required for Phase 2
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(CURL REQUIRED)
+find_package(OpenSSL REQUIRED)
+
 # Optional dependencies — required by later phases, found when available.
-find_package(nlohmann_json CONFIG QUIET)
-find_package(CURL CONFIG QUIET)
-find_package(OpenSSL QUIET)
 find_package(ftxui CONFIG QUIET)
 find_package(Boost QUIET COMPONENTS headers)
 find_package(asio CONFIG QUIET)
-find_package(tl-expected CONFIG QUIET)
 find_package(efsw CONFIG QUIET)
 find_package(valijson CONFIG QUIET)
 find_package(ryml CONFIG QUIET)
@@ -83,14 +84,61 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party)
 
 # --------------------------------------------------------------------------
-# Placeholder static library target: libpie
+# Static library target: libpie
 # --------------------------------------------------------------------------
 add_library(libpie STATIC
     src/core/placeholder.cpp
+    src/io/file_lock.cpp
+    src/io/http_client.cpp
+    src/io/subprocess.cpp
+    src/io/fs_watcher.cpp
+    src/io/image_pipeline.cpp
+    src/wire/jsonl.cpp
+    src/wire/yaml_frontmatter.cpp
+    src/wire/json_schema.cpp
+    src/wire/globber.cpp
+    src/wire/diff.cpp
+    src/auth/auth_storage.cpp
+    src/auth/oauth.cpp
+    src/session/session_file.cpp
+    src/session/session_tree.cpp
+    src/session/session_manager.cpp
+    src/session/migration.cpp
+    src/settings/settings_manager.cpp
+    src/settings/first_run_import.cpp
+    src/models/model_registry.cpp
+    src/resources/resource_loader.cpp
+    src/resources/prompt_loader.cpp
+    src/resources/skill_loader.cpp
+    src/resources/theme_manager.cpp
+    src/tools/tool_host.cpp
+    src/tools/builtin_tools.cpp
+    src/tools/bash_executor.cpp
+    src/compaction/compactor.cpp
+    src/queue/message_queue.cpp
+    src/providers/provider.cpp
+    src/tui/tui_runtime.cpp
+    src/extension_host/extension_host.cpp
+    src/sdk/package_manager.cpp
+    src/sdk/exporter.cpp
+    src/sdk/startup_checks.cpp
 )
 target_include_directories(libpie PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+target_link_libraries(libpie PUBLIC
+    nlohmann_json::nlohmann_json
+    CURL::libcurl
+    OpenSSL::SSL OpenSSL::Crypto
+    ${CMAKE_DL_LIBS}
+)
+# valijson is header-only; add include path if found
+if(valijson_FOUND)
+    target_link_libraries(libpie PUBLIC valijson)
+else()
+    # System-installed valijson (header-only, no cmake target)
+    target_include_directories(libpie PUBLIC /usr/include)
+endif()
 set_target_properties(libpie PROPERTIES
     OUTPUT_NAME pie
     ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
@@ -100,7 +148,7 @@ if(PIE_HAS_RUNTIME_ASSETS)
 endif()
 
 # --------------------------------------------------------------------------
-# Placeholder executable target: pie
+# Executable target: pie
 # --------------------------------------------------------------------------
 add_executable(pie
     src/cli/main.cpp
@@ -109,3 +157,26 @@ target_link_libraries(pie PRIVATE libpie CLI11::CLI11)
 set_target_properties(pie PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
 )
+
+# --------------------------------------------------------------------------
+# Tests (Catch2)
+# --------------------------------------------------------------------------
+find_package(Catch2 3 CONFIG QUIET)
+if(NOT Catch2_FOUND)
+    find_package(Catch2 3 REQUIRED)
+endif()
+
+enable_testing()
+
+add_executable(pie_tests
+    tests/unit/phase2_test.cpp
+    tests/unit/phase3_test.cpp
+)
+target_link_libraries(pie_tests PRIVATE libpie Catch2::Catch2WithMain)
+set_target_properties(pie_tests PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+include(CTest)
+include(Catch)
+catch_discover_tests(pie_tests)
