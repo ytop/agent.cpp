@@ -3,6 +3,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 #include "pie/io/subprocess.hpp"
+#include "pie/core/json.hpp"
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -46,7 +47,7 @@ TEST_CASE("Snapshot: --verbose banner contains expected fields", "[snapshot][ver
         "--verbose",
         "--no-session",
         "--mode", "json",
-        "--print", "ping"
+        "ping"
     });
 
     // Must exit cleanly (0 or 1 for provider error without key, not 2)
@@ -79,9 +80,12 @@ TEST_CASE("Snapshot: --mode json emits session_header as first line", "[snapshot
     }
 
     if (!first_line.empty() && first_line[0] == '{') {
-        auto json = pie::core::parse_json(first_line);
-        if (!json.is_null()) {
-            CHECK(json.contains("type"));
+        auto json_opt = pie::core::parse_json(first_line);
+        if (json_opt) {
+            auto& json = *json_opt;
+            if (!json.is_null()) {
+                CHECK(json.contains("type"));
+            }
         }
     }
 }

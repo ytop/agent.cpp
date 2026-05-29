@@ -10,5 +10,6 @@ FetchContent_Declare(
 # Disable rapidcheck's own test suite
 set(RC_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
 set(RC_ENABLE_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(RC_ENABLE_CATCH ON CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(rapidcheck)

@@ -21,7 +21,7 @@ static std::string read_file(const std::filesystem::path& path) {
 }
 
 static pie::core::JsonValue parse_json_file(const std::filesystem::path& path) {
-    return pie::core::parse_json(read_file(path));
+    return pie::core::parse_json(read_file(path)).value_or(pie::core::JsonValue{});
 }
 
 TEST_CASE("Conformance: settings fixture preserves all known keys", "[conformance][settings]") {

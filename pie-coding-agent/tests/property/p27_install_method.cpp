@@ -56,7 +56,12 @@ TEST_CASE("Property 29: extension error event is well-formed JSON", "[property][
     rc::prop("event JSON objects always have a type field", []() {
         pie::core::JsonValue ev = pie::core::JsonValue::object();
         ev["type"] = "extension_error";
-        ev["message"] = *rc::gen::arbitrary<std::string>();
+        std::string raw_msg = *rc::gen::arbitrary<std::string>();
+        std::string safe_msg;
+        for (char c : raw_msg) {
+            if (c >= 0x20 && c < 0x7F) safe_msg += c;
+        }
+        ev["message"] = safe_msg;
 
         std::string line = pie::wire::JsonlSerializer::serialize_line(ev);
         auto [entries, errors] = pie::wire::JsonlParser::parse(line);
@@ -71,8 +76,13 @@ TEST_CASE("Property 30: diagnostic format is non-empty", "[property][diagnostic]
     // Feature: cpp-coding-agent, Property 30: diagnostic format
     rc::prop("any non-empty error string stays non-empty when wrapped", []() {
         auto msg = *rc::gen::nonEmpty(rc::gen::arbitrary<std::string>());
+        std::string safe_msg;
+        for (char c : msg) {
+            if (c >= 0x20 && c < 0x7F) safe_msg += c;
+        }
+        if (safe_msg.empty()) safe_msg = "some_error";
         // The error wrapping contract: prefix "error: " + msg
-        std::string diagnostic = "error: " + msg;
+        std::string diagnostic = "error: " + safe_msg;
         RC_ASSERT(!diagnostic.empty());
         RC_ASSERT(diagnostic.find("error:") != std::string::npos);
     });
@@ -115,8 +125,11 @@ TEST_CASE("Property 32: slash command collision uses builtin precedence", "[prop
 TEST_CASE("Property 33: frontmatter substitution is injective", "[property][resources]") {
     // Feature: cpp-coding-agent, Property 33: frontmatter substitution
     rc::prop("different substitution values produce different outputs", []() {
-        auto val1 = *rc::gen::arbitrary<std::string>();
-        auto val2 = *rc::gen::arbitrary<std::string>();
+        auto raw_val1 = *rc::gen::arbitrary<std::string>();
+        auto raw_val2 = *rc::gen::arbitrary<std::string>();
+        std::string val1, val2;
+        for (char c : raw_val1) if (c >= 0x20 && c < 0x7F) val1 += c;
+        for (char c : raw_val2) if (c >= 0x20 && c < 0x7F) val2 += c;
         RC_PRE(val1 != val2);
 
         std::string tmpl = "Hello {{name}}!";

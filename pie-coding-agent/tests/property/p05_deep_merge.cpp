@@ -54,8 +54,8 @@ TEST_CASE("Property 6: ToolHost allowlist enforcement", "[property][tools]") {
     // Feature: cpp-coding-agent, Property 6: Tool_Allowlist
     rc::prop("blocked tools are never accessible when allowlist is set", []() {
         pie::tools::ToolHost host;
-        auto allowed_tool = *rc::gen::element(std::vector<std::string>{"read_file", "bash"});
-        auto blocked_tool = *rc::gen::element(std::vector<std::string>{"write_file", "edit_file"});
+        std::string allowed_tool = *rc::gen::arbitrary<bool>() ? "read_file" : "bash";
+        std::string blocked_tool = *rc::gen::arbitrary<bool>() ? "write_file" : "edit_file";
 
         pie::tools::ToolAllowlist al;
         al.allowed.insert(allowed_tool);

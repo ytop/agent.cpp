@@ -32,13 +32,17 @@ TEST_CASE("Property 1: session entry round-trip", "[property][session][wire]") {
         pie::core::JsonValue entry = pie::core::JsonValue::object();
         entry["type"] = "message";
         entry["id"] = "a1b2c3d4";
-        // Avoid keys with special chars that would break JSON
+        // Avoid keys and values with special/invalid chars that would break JSON
         std::string safe_key = key1.empty() ? "extra_field" : key1;
         for (auto& c : safe_key) {
-            if (c == '"' || c == '\\' || c < 0x20) c = '_';
+            if (c == '"' || c == '\\' || c < 0x20 || c >= 0x7F) c = '_';
+        }
+        std::string safe_val = val1;
+        for (auto& c : safe_val) {
+            if (c < 0x20 || c >= 0x7F) c = '_';
         }
         if (safe_key != "type" && safe_key != "id") {
-            entry[safe_key] = val1;
+            entry[safe_key] = safe_val;
         }
 
         std::string line = pie::wire::JsonlSerializer::serialize_line(entry);
@@ -68,11 +72,15 @@ TEST_CASE("Property 2: TS wire-format unknown-key preservation", "[property][wir
         // Sanitize extra_key
         std::string safe_key = extra_key;
         for (auto& c : safe_key) {
-            if (c == '"' || c == '\\' || c < 0x20) c = '_';
+            if (c == '"' || c == '\\' || c < 0x20 || c >= 0x7F) c = '_';
+        }
+        std::string safe_val = extra_val;
+        for (auto& c : safe_val) {
+            if (c < 0x20 || c >= 0x7F) c = '_';
         }
 
         if (!safe_key.empty() && safe_key != "type" && safe_key != "version") {
-            obj[safe_key] = extra_val;
+            obj[safe_key] = safe_val;
         }
 
         std::string line = pie::wire::JsonlSerializer::serialize_line(obj);

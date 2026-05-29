@@ -24,17 +24,17 @@ TEST_CASE("Property 19: resource discovery no duplicates", "[property][resources
 TEST_CASE("Property 20: tristate env parsing", "[property][settings]") {
     // Feature: cpp-coding-agent, Property 20: tristate env
     rc::prop("truthy strings parse to Truthy", []() {
-        auto truthy = *rc::gen::element(std::vector<const char*>{
-            "1", "true", "TRUE", "yes", "YES", "on", "ON"
-        });
+        const char* truthy_vals[] = {"1", "true", "TRUE", "yes", "YES", "on", "ON"};
+        int idx = *rc::gen::inRange(0, 7);
+        const char* truthy = truthy_vals[idx];
         auto result = pie::settings::EnvResolver::parse_bool(truthy);
         RC_ASSERT(result == pie::settings::Tristate::Truthy);
     });
 
     rc::prop("falsy strings parse to Falsy", []() {
-        auto falsy = *rc::gen::element(std::vector<const char*>{
-            "0", "false", "FALSE", "no", "NO", "off", "OFF"
-        });
+        const char* falsy_vals[] = {"0", "false", "FALSE", "no", "NO", "off", "OFF"};
+        int idx = *rc::gen::inRange(0, 7);
+        const char* falsy = falsy_vals[idx];
         auto result = pie::settings::EnvResolver::parse_bool(falsy);
         RC_ASSERT(result == pie::settings::Tristate::Falsy);
     });

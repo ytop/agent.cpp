@@ -19,6 +19,11 @@ class AuthStorage {
 public:
     static Result<AuthStorage> create(const std::filesystem::path& agent_dir);
     static AuthStorage in_memory();
+    static AuthStorage from_json(const core::JsonValue& json) {
+        AuthStorage s;
+        s.data_ = json;
+        return s;
+    }
 
     // API key resolution: runtime > stored > env > fallback
     std::optional<std::string> resolve_api_key(const std::string& provider) const;

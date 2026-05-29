@@ -50,7 +50,17 @@ std::optional<std::string> AuthStorage::resolve_api_key(const std::string& provi
     if (data_.contains(provider) && data_[provider].contains("apiKey"))
         return data_[provider]["apiKey"].get<std::string>();
     // 3. Environment variable (provider-specific)
-    // Handled by caller via ProviderDescriptor env_var
+    std::string env_var;
+    if (provider == "anthropic") env_var = "ANTHROPIC_API_KEY";
+    else if (provider == "openai") env_var = "OPENAI_API_KEY";
+    else if (provider == "deepseek") env_var = "DEEPSEEK_API_KEY";
+    else if (provider == "google-gemini") env_var = "GEMINI_API_KEY";
+    
+    if (!env_var.empty()) {
+        if (const char* env_val = std::getenv(env_var.c_str())) {
+            return std::string(env_val);
+        }
+    }
     return std::nullopt;
 }
 

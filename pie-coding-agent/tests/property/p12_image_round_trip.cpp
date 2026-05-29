@@ -36,7 +36,8 @@ TEST_CASE("Property 13: auto_resize respects kMaxDimension", "[property][image]"
         // Generate image data with random dimensions
         int w = *rc::gen::inRange(1, 5000);
         int h = *rc::gen::inRange(1, 5000);
-        int ch = *rc::gen::element(std::vector<int>{1, 3, 4});
+        int idx = *rc::gen::inRange(0, 3);
+        int ch = (idx == 0) ? 1 : (idx == 1 ? 3 : 4);
 
         pie::io::ImageData img;
         img.width = w;

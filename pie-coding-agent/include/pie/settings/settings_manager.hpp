@@ -31,6 +31,11 @@ public:
         const std::filesystem::path& global_path,
         const std::filesystem::path& project_path = "");
     static SettingsManager in_memory();
+    static SettingsManager from_json(const core::JsonValue& json) {
+        SettingsManager s;
+        s.global_ = json;
+        return s;
+    }
 
     // Deep merge: project overrides global, preserving nested structure
     static core::JsonValue deep_merge(const core::JsonValue& base, const core::JsonValue& overlay);

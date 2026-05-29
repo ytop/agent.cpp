@@ -45,6 +45,12 @@ public:
                 }
             });
         if (!result) return std::unexpected(ProviderError{ProviderError::Generic, result.error()});
+        if (*result >= 400) {
+            return std::unexpected(ProviderError{
+                *result == 401 ? ProviderError::Auth : ProviderError::Generic,
+                "HTTP error " + std::to_string(*result)
+            });
+        }
         return {};
     }
 };
@@ -75,6 +81,12 @@ public:
                 } catch (...) {}
             });
         if (!result) return std::unexpected(ProviderError{ProviderError::Generic, result.error()});
+        if (*result >= 400) {
+            return std::unexpected(ProviderError{
+                *result == 401 ? ProviderError::Auth : ProviderError::Generic,
+                "HTTP error " + std::to_string(*result)
+            });
+        }
         return {};
     }
 };

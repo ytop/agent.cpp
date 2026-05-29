@@ -25,12 +25,12 @@ TEST_CASE("Property 10: bash output ends at complete line", "[property][bash]") 
 TEST_CASE("Property 11: bash metachar argv pattern", "[property][bash]") {
     // Feature: cpp-coding-agent, Property 11: bash metachar byte-equivalence
     rc::prop("metacharacters in command are passed verbatim to shell", []() {
-        auto suffix = *rc::gen::element(std::vector<std::string>{
-            "echo a&&echo b",
-            "echo a;echo b",
-            "echo 'hello world'",
-            "echo -n done"
-        });
+        int idx = *rc::gen::inRange(0, 4);
+        std::string suffix;
+        if (idx == 0) suffix = "echo a&&echo b";
+        else if (idx == 1) suffix = "echo a;echo b";
+        else if (idx == 2) suffix = "echo 'hello world'";
+        else suffix = "echo -n done";
 
         auto res = pie::io::Subprocess::shell(suffix);
         RC_PRE(res.has_value());

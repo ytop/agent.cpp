@@ -47,13 +47,19 @@ TEST_CASE("Property 16: mode conflict detection", "[property][cli]") {
     // Feature: cpp-coding-agent, Property 16: mode conflict
     rc::prop("two mode flags always produce ConflictError", []() {
         // Pick two distinct mode flags
-        auto flags = *rc::gen::element(std::vector<std::pair<std::string,std::string>>{
-            {"-p", "--mode"},
-            {"-p", "--mode"},
-            {"--mode", "--export"},
-        });
-        std::string flag1 = flags.first;
-        std::string flag2 = flags.second + (flags.second == "--mode" ? " json" : " /tmp/x.jsonl");
+        int idx = *rc::gen::inRange(0, 3);
+        std::string flag1 = "-p";
+        std::string flag2 = "--mode json";
+        if (idx == 0) {
+            flag1 = "-p";
+            flag2 = "--mode json";
+        } else if (idx == 1) {
+            flag1 = "-p";
+            flag2 = "--export /tmp/x.jsonl";
+        } else {
+            flag1 = "--mode json";
+            flag2 = "--export /tmp/x.jsonl";
+        }
 
         // Build argv with two mode flags
         std::vector<std::string> args_storage = {"pie", "-p", "--mode", "json"};

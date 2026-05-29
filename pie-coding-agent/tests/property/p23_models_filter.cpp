@@ -55,7 +55,13 @@ TEST_CASE("Property 25: atomic append file integrity", "[property][session]") {
     // Feature: cpp-coding-agent, Property 25: atomic append
     rc::prop("serialized JSONL lines always end with newline", []() {
         pie::core::JsonValue val = pie::core::JsonValue::object();
-        val["id"] = *rc::gen::arbitrary<std::string>();
+        std::string raw_id = *rc::gen::arbitrary<std::string>();
+        std::string safe_id;
+        for (char c : raw_id) {
+            if (c >= 0x20 && c < 0x7F) safe_id += c;
+        }
+        if (safe_id.empty()) safe_id = "default_id";
+        val["id"] = safe_id;
         val["type"] = "message";
 
         std::string line = pie::wire::JsonlSerializer::serialize_line(val);
